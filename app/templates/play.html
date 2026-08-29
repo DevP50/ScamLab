@@ -6,7 +6,7 @@
  <p>{{ scenario.content}}</p>
  <form method="post" action="{{url_for('auth_bp.start_training')}}">
   <p>What clues did you notice?</p>
-  {% for clue in scenario.clues %}
+  {% for clue in scenario.clues_options %}
       <input
             type="checkbox"
             id="clue-{{ loop.index }}"
