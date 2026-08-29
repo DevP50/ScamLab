@@ -6,7 +6,7 @@
  <p>{{ scenario.content}}</p>
  <form method="post" action="{{url_for('auth_bp.start_training')}}">
   <p>What clues did you notice?</p>
-  {% for clue in scenario.clues_options %}
+  {% for clue in scenario.clue_options %}
       <input
             type="checkbox"
             id="clue-{{ loop.index }}"
@@ -25,7 +25,7 @@
   <button align="left" value="scam" name="answer" id="answer-el" {% if result %}disabled{% endif %}>SCAM</button> 
    <p><b>OR</b></p>
   <button align="right" vlaue="legit" name="answer" id="answer-el" {% if result %}disabled{% endif %}>LEGIT</button>
-  <input type="hidden" name="scenario_id "value="{{scenario.id}}">
+  <input type="hidden" name="scenario_id" value="{{scenario.id}}">
 
  </form>
 
@@ -41,9 +41,18 @@
   <h3>Correct Clue Points : {{result.clue_xp}}</h3>
   <h3>Difficulty : {{result.difficulty_points}}</h3>
 
-   <a href="/play?next=1" >
-     <button>NEXT SCENARIO</button>
-   </a>
+  {% if level_complete %}
+
+    <h2>🎉 LEVEL 1 COMPLETE!</h2>
+    <p>Congratulations! You completed all 5 scenarios.</p>
+
+  {% elif next_scenario %}
+
+    <a href="{{ url_for('auth_bp.start_training', next=next_scenario.id) }}">
+        <button type="button">NEXT SCENARIO</button>
+    </a>
+
+  {% endif %}
  {% endif %}
  <script src="{{ url_for('static', filename='main.js') }}"></script>
 {% endblock content %}

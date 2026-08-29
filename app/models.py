@@ -16,7 +16,7 @@ class User(db.Model):
 
     
 class Scenario(db.Model):
-    id = db.Column(db.Integer, nullable=False, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.String(1000), nullable=False)
     category = db.Column(db.String(100), nullable=False)
@@ -24,7 +24,7 @@ class Scenario(db.Model):
     correct_answer = db.Column(db.String(100), nullable=False)
 
     clues = db.Column(db.JSON, nullable=False)
-    clues_options = db.Column(db.JSON, nullable=False)
+    clue_options = db.Column(db.JSON, nullable=False)
     explanation = db.Column(db.String(1000), nullable=False)
     scenario = db.relationship('Attempt',back_populates='user_scenario')
     #Note: back_populates should point to the relationship name on the other column no to the  ForeignKey
@@ -42,4 +42,4 @@ class Attempt(db.Model):
     user_attempt = db.relationship("User", back_populates='user')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user_scenario = db.relationship("Scenario", back_populates='scenario' )
-    scenario_id = db.Column(db.Integer,db.ForeignKey('scenario.id'), nullable=False)
+    scenario_id = db.Column(db.Integer,db.ForeignKey('scenario.id'))

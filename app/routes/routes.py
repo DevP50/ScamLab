@@ -4,10 +4,10 @@ from app.models import User,Scenario,ScenarioDifficulty,Attempt
 from extensions import db
 from app.services.calculate_xp import calculate_xp
 from app.services.calculate_score import calculate_score
-
+from sqlalchemy import case
 from werkzeug.security import generate_password_hash,check_password_hash
 from . import auth_bp,app_bp
-user_id = User.query.get(id)
+
 
 @app_bp.route('/')
 @auth_bp.route('/register', methods=['GET', 'POST'])
@@ -57,69 +57,125 @@ def dashboard():
 
 
 
-@auth_bp.route('/play', methods=['GET','POST'])
+@auth_bp.route('/play', methods=['GET', 'POST'])
 def start_training():
     user_answer = None
     correct = None
     message = None
     result = None
     selected_clues = None
-    scenario_id = request.form.get("scenario_id")
-    scenario = Scenario.query.get(scenario_id) 
-    if request.method == "POST": 
-     user_answer = request.form.get('answer').lower()#Get the value of user choice either SCAM/LEGIT
-     selected_clues = request.form.getlist('clues')#Lists do not have the lower() method
-     current_id = request.args.get("next")
 
-     if current_id:
-      int_current_id =  int(current_id)
-      scenario = Scenario.query.filter(
-         Scenario.id > int_current_id
-      ).first()
-     else:
-        scenario = Scenario.query.first()
-     print("USER ANSWER: ",user_answer)
-     print("CORRECT AnSWER: ",scenario.correct_answer)
-     print("SELECTED CLUES: ",selected_clues)
-     correct = (user_answer == scenario.correct_answer)#Compare the user's answer and the scenario's correct answer and store the value in correct
-     result_xp = calculate_xp(
-        correct_answer=correct,
-        selected_clues=selected_clues,
-        scenario_clues=scenario.clues
-     )
+    LEVEL_1_END = 5
+    level_complete = False
+    next_scenario = None
 
-     score = calculate_score(
-        correct_answer= correct,
-        selected_clues=selected_clues,
-        scenario_clues=scenario.clues
-     )
-     print("XP RESULT: ",result_xp)
-     if correct:
-      message = "You got it!"
-     else:
-        message = "Not Quite. Try Again!"
-     result = {
+    difficulty_order = case(
+        (Scenario.difficulty == ScenarioDifficulty.EASY, 1),
+        (Scenario.difficulty == ScenarioDifficulty.MEDIUM, 2),
+        (Scenario.difficulty == ScenarioDifficulty.HARD, 3)
+    )
+
+    # Debug: show all scenarios
+    for s in Scenario.query.all():
+        print(s.id, s.title, s.difficulty, s.difficulty.value)
+
+    if request.method == "GET":
+
+        # Check if we're supposed to load a specific next scenario
+        next_id = request.args.get("next")
+
+        if next_id:
+            scenario = Scenario.query.get(next_id)
+        else:
+            # Start from the first scenario
+            scenario = Scenario.query.order_by(
+                difficulty_order,
+                Scenario.id
+            ).first()
+
+        if not scenario:
+            return "Scenario not found", 404
+
+    else:
+        # Get the scenario the user just answered
+        scenario_id = request.form.get("scenario_id")
+        scenario = Scenario.query.get(scenario_id)
+
+        if not scenario:
+            return "Scenario not found", 404
+
+        user_answer = request.form.get('answer').lower()
+        selected_clues = request.form.getlist('clues')
+
+        print("USER ANSWER:", user_answer)
+        print("CORRECT ANSWER:", scenario.correct_answer)
+        print("SELECTED CLUES:", selected_clues)
+
+        correct = (user_answer == scenario.correct_answer)
+
+        result_xp = calculate_xp(
+            correct_answer=correct,
+            selected_clues=selected_clues,
+            scenario_clues=scenario.clues
+        )
+
+        score = calculate_score(
+            correct_answer=correct,
+            selected_clues=selected_clues,
+            scenario_clues=scenario.clues,
+            difficulty=scenario.difficulty
+        )
+
+        print("XP RESULT:", result_xp)
+
+        if correct:
+            message = "You got it!"
+        else:
+            message = "Not Quite. Try Again!"
+
+        result = {
             "correct": correct,
             "user_answer": user_answer,
             "message": message,
-            "answer_xp": result_xp["answer_xp"],#Get the values by indexing the keys
+            "answer_xp": result_xp["answer_xp"],
             "clue_xp": result_xp["clue_xp"],
             "total_xp": result_xp["total_xp"],
-            "total_score": score['total_score'],
-            "difficulty_points": score['difficulty_points']
-     }
-     attempt = Attempt(
-             user_id = user_id,
-             scenario_id = scenario_id,
-             answer= user_answer,
-             correct = result['correct'],
-             xp_earned = result_xp['total_xp'],
-             score = score['total_score'],
-          )
-     db.session.add(attempt)
-     db.session.commit()
+            "total_score": score["total_score"],
+            "difficulty_points": score["difficulty_points"]
+        }
 
-     
+        # Find the next scenario
+        if scenario.id >= LEVEL_1_END:
+            level_complete = True
+            next_scenario = None
+        else:
+         next_scenario = Scenario.query.filter(
+            Scenario.id > scenario.id
+         ).order_by(
+            Scenario.id
+         ).first()
+         level_complete = False
 
-    return render_template("play.html", user_answer=user_answer, correct=correct,scenario=scenario, message=message,result=result,selected_clues=selected_clues)
-    
+        print("CURRENT SCENARIO:", scenario.id, scenario.title)
+
+        if next_scenario:
+            print("NEXT SCENARIO:", next_scenario.id, next_scenario.title)
+        else:
+            print("NO MORE SCENARIOS!")
+
+    print("SCENARIO:", scenario)
+    print("SCENARIO ID:", scenario.id if scenario else None)
+    print("SCENARIO TITLE:", scenario.title if scenario else None)
+    print("SCENARIO CONTENT:", scenario.content if scenario else None)
+
+    return render_template(
+        "play.html",
+        user_answer=user_answer,
+        correct=correct,
+        scenario=scenario,
+        message=message,
+        result=result,
+        selected_clues=selected_clues,
+        level_complete=level_complete,
+        next_scenario= next_scenario
+    )

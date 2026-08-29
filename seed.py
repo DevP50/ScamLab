@@ -2,8 +2,7 @@ from app.models import Scenario,ScenarioDifficulty
 from extensions import db
 from app import create_app
 app = create_app()
-with app.app_context():
- scenarios =[ {
+scenarios =[ {
     "title": "GCE 2026 UPDATES AND RESULTS",
     "content": "Congratulations! Your results are available early. Pay a small verification fee to receive them now.",
     "correct_answer": "scam",
@@ -192,7 +191,7 @@ with app.app_context():
             "Does not request a password",
             "Does not request payment"
         ],
-        "clues_options":[
+        "clue_options":[
            "Provides a safe verification method",
            "Does not request a password",
            "Does not request payment",
@@ -229,18 +228,19 @@ with app.app_context():
         "explanation": "This message combines several manipulation techniques: urgency, artificial scarcity, a payment demand, and requests for sensitive documents. Legitimate scholarship programs should be verified through their official organization or institution."
     }
     ]
-
+print("NUMBER OF SCENARIOS:", len(scenarios))
+with app.app_context():
  for data in scenarios:
- 
+  print("SEEDING:", data["title"])
   title = data['title']
- content = data['content']
- correct_answer = data['correct_answer']
- clues = data['clues']
- difficulty = data['difficulty']
- category = data['category']
- explanation = data['explanation']
- clue_options = data['clue_options']
- scenario = Scenario(
+  content = data['content']
+  correct_answer = data['correct_answer']
+  clues = data['clues']
+  difficulty = data['difficulty']
+  category = data['category']
+  explanation = data['explanation']
+  clue_options = data['clue_options']
+  scenario = Scenario(
     title = title,
     content = content,
     correct_answer = correct_answer,
@@ -251,5 +251,6 @@ with app.app_context():
     clue_options = clue_options
     )
 
- db.session.add(scenario)
+  db.session.add(scenario)
+  print("ADDED:", scenario.title)
  db.session.commit()

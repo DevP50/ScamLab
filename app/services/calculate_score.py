@@ -1,6 +1,7 @@
-from models import ScenarioDifficulty
+from app.models import ScenarioDifficulty
 def calculate_score(correct_answer,difficulty,scenario_clues,selected_clues):
     answer_xp = 0
+    clue_xp=0
     wrong_clue_xp = 0
     correct_clue_points = 0
     wrong_clue_points = 0
