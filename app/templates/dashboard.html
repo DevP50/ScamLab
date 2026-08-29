@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 id="greeting-el">Nice to have you here, {{user.username}}  </h1>
+
+<p><b>Level</b></p>
+<p>{{user.xp}} XP</p>
+
+<p>Scenarios completed: </p>
+<p>Accuracy:  --</p>
+
+<button id="training-el">START TRAINING</button>
+{% endblock  %}

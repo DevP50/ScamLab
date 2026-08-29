@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %} Scenario #{{scenario.id}} {% endblock title %}
+
+{% block content %}
+ <h1>{{scenario.title}}</h1>
+ <p>{{ scenario.content}}</p>
+ <form method="post" action="{{url_for('auth_bp.start_training')}}">
+  <p>What clues did you notice?</p>
+  {% for clue in scenario.clues %}
+      <input
+            type="checkbox"
+            id="clue-{{ loop.index }}"
+            name="clues"
+            value="{{ clue }}"
+         itemid="input-el"
+         {% if result %}disabled{% endif %}>
+
+        <label for="clue-{{ loop.index }}">
+            {{ clue }}
+        </label>
+       
+        <br>
+  {% endfor %}
+ <p>Is this: </p>
+  <button align="left" value="scam" name="answer" id="answer-el" {% if result %}disabled{% endif %}>SCAM</button> 
+   <p><b>OR</b></p>
+  <button align="right" vlaue="legit" name="answer" id="answer-el" {% if result %}disabled{% endif %}>LEGIT</button>
+  <input type="hidden" name="scenario_id "value="{{scenario.id}}">
+
+ </form>
+
+ {% if result %}
+  <p>Your answer was {{result.user_answer}}</p>
+  <p>The answer is {{result.correct}}</p>
+  <h3 >{{message}}</h3>
+  <p>{{scenario.explanation}}</p>
+  <h3>XP: {{result.answer_xp}}XP</h3>
+  <h3>Additional XP: {{result.clue_xp}}XP</h3>
+  <h3>Total XP: {{result.total_xp}}</h3>
+
+   <a href="/play?next=1" >
+     <button>NEXT SCENARIO</button>
+   </a>
+ {% endif %}
+ <script src="{{ url_for('static', filename='main.js') }}"></script>
+{% endblock content %}
+     

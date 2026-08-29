@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Results {% endblock title %}
+{% block content %}
+<h3>Your answer was {{ user_answer}}</h3>
+<h3>The answer is {{correct}}</h3>
+
+{% if correct %}
+ <h3>Sharp eye you got it!</h3>
+{% else %}
+ <h3>Not Quite, Try Again.</h3>
+{% endif %}
+{% endblock content %}
