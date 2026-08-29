@@ -116,6 +116,8 @@ def start_training():
              xp_earned = result_xp['total_xp'],
              score = score['total_score'],
           )
+     db.session.add(attempt)
+     db.session.commit()
 
      
 
