@@ -7,6 +7,7 @@ from app.services.calculate_score import calculate_score
 from sqlalchemy import case
 from werkzeug.security import generate_password_hash,check_password_hash
 from . import auth_bp,app_bp
+from flask_login import login_user,current_user
 
 
 @app_bp.route('/')
@@ -42,6 +43,7 @@ def login():
 
         if user and check_password_hash(user.password_hash, form.password.data):
           session['user'] = user.email
+          login_user(user)
           flash('Login successful!', 'success')
           return redirect(url_for('dashboard'))
         else:
@@ -143,6 +145,17 @@ def start_training():
             "total_score": score["total_score"],
             "difficulty_points": score["difficulty_points"]
         }
+
+        attempt = Attempt(
+            answer= result['user_answer'],
+            correct=correct,
+            score=score['total_score'],
+            xp_earned=result_xp["total_xp"],
+            user_id=current_user.id,
+            scenario=scenario.id
+        )
+        db.session.add(attempt)
+        db.session.commit()
 
         # Find the next scenario
         if scenario.id >= LEVEL_1_END:
