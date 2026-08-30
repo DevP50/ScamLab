@@ -24,7 +24,7 @@
  <p>Is this: </p>
   <button align="left" value="scam" name="answer" id="answer-el" {% if result %}disabled{% endif %}>SCAM</button> 
    <p><b>OR</b></p>
-  <button align="right" vlaue="legit" name="answer" id="answer-el" {% if result %}disabled{% endif %}>LEGIT</button>
+  <button align="right" value="legit" name="answer" id="answer-el" {% if result %}disabled{% endif %}>LEGIT</button>
   <input type="hidden" name="scenario_id" value="{{scenario.id}}">
 
  </form>
@@ -45,6 +45,14 @@
 
     <h2>🎉 LEVEL 1 COMPLETE!</h2>
     <p>Congratulations! You completed all 5 scenarios.</p>
+    <h2>Performance Overview</h2>
+    <ul>
+      <li><b>Total Attempts</b> : {{performance_result.total_attempts}}</li>
+      <li><b>Correct Attempts</b>: {{performance_result.correct_attempts}}</li>
+      <li><b>Level Accuracy</b>: {{performance_result.accuracy}}</li>
+      <li><b>Overall Score</b>  {{performance_result.total_score}}</li>
+      <li><b>Overall XP</b> {{performance_result.total_xp}}</li>
+    </ul>
 
   {% elif next_scenario %}
 
