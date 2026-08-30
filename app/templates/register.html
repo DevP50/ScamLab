@@ -3,7 +3,7 @@
 
 {% block content %}
 <h1>Register </h1>
-<form method="POST" action="{{url_for('auth_bp.login')}}">
+<form method="POST" action="{{url_for('auth_bp.register')}}">
     {{form.hidden_tag()}}<!--Used to create the CRSF token -->
     <p>
         {{form.username.label }}
@@ -30,5 +30,9 @@
 
     {{ form.submit() }}
 </form>
+<p>
+  Already Have an Account? 
+ <a href="{{url_for('auth_bp.login')}}">Login Here</a>
+</p>
 {% endblock content %}
 
