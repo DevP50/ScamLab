@@ -1,36 +1,45 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, session,request
 from forms import RegistrationForm,LoginForm
 from app.models import User,Scenario,ScenarioDifficulty,Attempt
-from extensions import db
+from extensions import db,login_manager
 from app.services.calculate_xp import calculate_xp
 from app.services.calculate_score import calculate_score
+from app.services.get_performance import get_performance
 from sqlalchemy import case
 from werkzeug.security import generate_password_hash,check_password_hash
 from . import auth_bp,app_bp
 from flask_login import login_user,current_user
 
-
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 @app_bp.route('/')
+def index():
+    return render_template('index.html')  # or redirect(url_for('auth_bp.register')
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         username = form.username.data
-        email = form.email.data.strip().lower() #Collecting data from the form
-        password_hash = generate_password_hash(form.password.data)#Wrapping the password in a hashing algorithm
+        email = form.email.data.strip().lower()
+        password_hash = generate_password_hash(form.password.data)
         if User.query.filter_by(email=email).first():
             flash("This email already exists please select a new one")
-            return redirect(url_for('register'))
+            return redirect(url_for('auth_bp.register'))
 
         new_user = User(
-            username = username,
+            username=username,
             email=email,
-            password_hash=password_hash     
-            )
+            password_hash=password_hash,
+            level=0,
+            xp=0
+        )
         db.session.add(new_user)
-        db.session.commit(new_user)
+        db.session.commit()
         flash('Registration successful!', 'success')
-        return redirect(url_for('login'))
+        return redirect(url_for('auth_bp.login'))
+    else:
+        print("FORM ERRORS:", form.errors)   # <-- add it here, same indent level as the `if`
 
     return render_template('register.html', form=form)
 
@@ -45,10 +54,16 @@ def login():
           session['user'] = user.email
           login_user(user)
           flash('Login successful!', 'success')
-          return redirect(url_for('dashboard'))
+          return redirect(url_for('auth_bp.dashboard'))
         else:
             flash('Invalid email or password', 'danger')
+            print("DEBUG user found:", user)
+            if user:
+               print("DEBUG hash in db:", user.password_hash)
+            flash('Invalid email or password', 'danger')
             return redirect(url_for('auth_bp.login'))
+    else:
+        print("FORM ERRORS:", form.errors)   
 
     return render_template('login.html', form=form)
 
@@ -66,11 +81,11 @@ def start_training():
     message = None
     result = None
     selected_clues = None
-
+    pwerformance = None
     LEVEL_1_END = 5
     level_complete = False
     next_scenario = None
-
+    performance_result = None
     difficulty_order = case(
         (Scenario.difficulty == ScenarioDifficulty.EASY, 1),
         (Scenario.difficulty == ScenarioDifficulty.MEDIUM, 2),
@@ -152,15 +167,27 @@ def start_training():
             score=score['total_score'],
             xp_earned=result_xp["total_xp"],
             user_id=current_user.id,
-            scenario=scenario.id
+            scenario_id=scenario.id
         )
         db.session.add(attempt)
         db.session.commit()
-
         # Find the next scenario
         if scenario.id >= LEVEL_1_END:
             level_complete = True
             next_scenario = None
+            performance = get_performance(
+             user_id=current_user.id
+            )
+            if performance:
+                 performance_result = {
+                 "total_attempts": performance['total_attempts'],
+                  "correct_attempts": performance['correct_attempts'],
+                   "accuracy": performance['accuracy'],
+                    "total_score": performance['total_score'],
+                    "total_xp": performance['total_xp'],
+                    "category_performance": performance['category_performance'],
+                    "difficulty_performance": performance['difficulty_performance']
+                    }
         else:
          next_scenario = Scenario.query.filter(
             Scenario.id > scenario.id
@@ -180,7 +207,7 @@ def start_training():
     print("SCENARIO ID:", scenario.id if scenario else None)
     print("SCENARIO TITLE:", scenario.title if scenario else None)
     print("SCENARIO CONTENT:", scenario.content if scenario else None)
-
+    
     return render_template(
         "play.html",
         user_answer=user_answer,
@@ -190,5 +217,6 @@ def start_training():
         result=result,
         selected_clues=selected_clues,
         level_complete=level_complete,
-        next_scenario= next_scenario
+        next_scenario= next_scenario,
+        performance_result=performance_result
     )
