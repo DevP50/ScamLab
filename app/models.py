@@ -1,11 +1,12 @@
 from extensions import db
 from enum import Enum
 from datetime import datetime
+from flask_login import UserMixin
 class ScenarioDifficulty(Enum):
     EASY = "easy"
     MEDIUM = "medium"
     HARD = "hard"
-class User(db.Model):
+class User(db.Model,UserMixin):
     id = db.Column(db.Integer,primary_key=True)
     username = db.Column(db.String(35), nullable= False)
     email = db.Column(db.String(100), nullable= False, unique=True)
