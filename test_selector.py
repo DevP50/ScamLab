@@ -1,23 +1,27 @@
-from app.models import Scenario, Attempt, ScenarioDifficulty
+from app import create_app
+from app.services.scenario_selector import select_scenario
 
 
-def select_scenario(category, difficulty, user_id):
+app = create_app()
 
-    attempts = Attempt.query.filter_by(
-        user_id=user_id
-    ).all()
+with app.app_context():
 
-    attempted_ids = [
-        attempt.scenario_id
-        for attempt in attempts
-    ]
+    USER_ID = 6
 
-    difficulty = ScenarioDifficulty(difficulty)
+    scenario = select_scenario(
+        category="phishing",
+        difficulty="hard",
+        user_id=USER_ID
+    )
 
-    scenarios = Scenario.query.filter(
-        Scenario.category == category,
-        Scenario.difficulty == difficulty,
-        ~Scenario.id.in_(attempted_ids)
-    ).all()
+    print("\nSELECTED SCENARIO:")
 
-    return scenarios
+    if scenario:
+        print(
+            scenario.id,
+            scenario.title,
+            scenario.category,
+            scenario.difficulty.value
+        )
+    else:
+        print("No matching scenario found.")
