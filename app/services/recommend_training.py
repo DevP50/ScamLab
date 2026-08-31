@@ -1,7 +1,7 @@
 def recommend_training(performance):
 
     category_performance = performance["category_performance"]
-    difficulty_performance = performance["difficulty_performance"]
+    difficulty_performance = performance['difficulty_performance']
     #Original Gamestate the player has not attempted any scenarios yet
     if not category_performance:
         return {
@@ -33,6 +33,7 @@ def recommend_training(performance):
 
     return {
         "primary_weakness": weakest_category,
+        "difficulty_performance": difficulty_performance,
         "recommended_difficulty": recommended_difficulty,
         "focus_categories": [weakest_category],
         "reason": (
