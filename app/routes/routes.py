@@ -117,25 +117,18 @@ def start_training():
     else:
         level_start = 6
         level_end =20
-    USER_ID = User.query.filter(id=current_user.id)
+    performance = get_performance(user_id=current_user.id)
 
-    performance = get_performance(USER_ID)#Get the actual performance data using the user_id
-
-    print("PERFORMANCE:")
-    print(performance)
 
     recommendation = recommend_training(performance)
 
-    print("\nDETERMINISTIC RECOMMENDATION:")
-    print(recommendation)
 
     ai_message = ai_recommendation_engine(
       performance=performance,
     recommendation=recommendation
     )
 
-    print("\nAI RECOMMENDATION:")
-    print(ai_message)
+
 
     difficulty_order = case(
         (Scenario.difficulty == ScenarioDifficulty.EASY, 1),
@@ -256,7 +249,7 @@ def start_training():
             difficulty=scenario.difficulty
         )
 
-        message = "You got it!" if correct else "Not Quite. Try Again!"
+        message = "You got it!" if correct else "Not Quite."
 
         result = {
             "correct": correct,
