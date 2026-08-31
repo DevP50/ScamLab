@@ -5,6 +5,8 @@ from extensions import db,login_manager
 from app.services.calculate_xp import calculate_xp
 from app.services.calculate_score import calculate_score
 from app.services.get_performance import get_performance
+from app.services.recommend_training import recommend_training
+from app.services.scenario_selector import select_scenario
 from sqlalchemy import case
 from werkzeug.security import generate_password_hash,check_password_hash
 from . import auth_bp,app_bp
@@ -104,11 +106,22 @@ def start_training():
         if next_id:
             scenario = Scenario.query.get(next_id)
         else:
-            # Start from the first scenario
-            scenario = Scenario.query.order_by(
-                difficulty_order,
-                Scenario.id
-            ).first()
+            # Get the all the attempts by a specific user
+             user_attempts = Attempt.query.filter_by(
+            user_id=current_user.id
+             ).order_by(Attempt.id.asc()).all()
+
+             attempted_ids = {
+             attempt.scenario_id
+             for attempt in user_attempts
+             }
+
+        # Find the first scenario the user has NOT attempted
+             scenario = Scenario.query.filter(
+            ~Scenario.id.in_(attempted_ids)
+            ).order_by(
+            Scenario.id
+             ).first()
 
         if not scenario:
             return "Scenario not found", 404
@@ -127,8 +140,11 @@ def start_training():
         print("USER ANSWER:", user_answer)
         print("CORRECT ANSWER:", scenario.correct_answer)
         print("SELECTED CLUES:", selected_clues)
-
+        print("FORM DATA:", request.form)
+        print("RECEIVED ANSWER:", repr(user_answer))
+        print("EXPECTED ANSWER:", repr(scenario.correct_answer))
         correct = (user_answer == scenario.correct_answer)
+        print("CORRECT: ",correct)
 
         result_xp = calculate_xp(
             correct_answer=correct,
@@ -173,28 +189,63 @@ def start_training():
         db.session.commit()
         # Find the next scenario
         if scenario.id >= LEVEL_1_END:
-            level_complete = True
-            next_scenario = None
-            performance = get_performance(
-             user_id=current_user.id
+         level_complete = True
+
+         performance = get_performance(
+          user_id=current_user.id
+          )
+
+         if performance:
+
+          performance_result = {
+            "total_attempts": performance["total_attempts"],
+            "correct_attempts": performance["correct_attempts"],
+            "accuracy": performance["accuracy"],
+            "total_score": performance["total_score"],
+            "total_xp": performance["total_xp"],
+            "category_performance": performance["category_performance"],
+            "difficulty_performance": performance["difficulty_performance"]
+           }
+
+        # Determine what the player should practice next
+          recommendation = recommend_training(
+            performance=performance
             )
-            if performance:
-                 performance_result = {
-                 "total_attempts": performance['total_attempts'],
-                  "correct_attempts": performance['correct_attempts'],
-                   "accuracy": performance['accuracy'],
-                    "total_score": performance['total_score'],
-                    "total_xp": performance['total_xp'],
-                    "category_performance": performance['category_performance'],
-                    "difficulty_performance": performance['difficulty_performance']
-                    }
-        else:
-         next_scenario = Scenario.query.filter(
-            Scenario.id > scenario.id
-         ).order_by(
-            Scenario.id
-         ).first()
-         level_complete = False
+
+          print("TRAINING RECOMMENDATION:", recommendation)
+          
+          if recommendation['primary_weakness']:
+            focus_categories = recommendation.get(
+             "focus_categories",
+              []
+            )
+
+            recommended_difficulty = recommendation.get(
+              "recommended_difficulty",
+              "easy"
+            )
+
+            if focus_categories:
+
+             next_scenario = select_scenario(
+             category=focus_categories[0],
+             difficulty=recommended_difficulty,
+             user_id=current_user.id
+             )
+
+             print(
+            "ADAPTIVE NEXT SCENARIO:",
+            next_scenario
+              )
+        # Find an unattempted scenario matching the recommendation
+        if scenario.id < LEVEL_1_END:
+            next_scenario = Scenario.query.filter(
+                Scenario.id > scenario.id
+            ).order_by(
+                Scenario.id
+            ).first()
+
+            level_complete = False
 
         print("CURRENT SCENARIO:", scenario.id, scenario.title)
 
