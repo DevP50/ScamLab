@@ -53,6 +53,21 @@
       <li><b>Overall Score</b>  {{performance_result.total_score}}</li>
       <li><b>Overall XP</b> {{performance_result.total_xp}}</li>
     </ul>
+  {% if ai_message %}
+   <section class="ai-recommendation">
+    <div class="ai-recommendation-header">
+        <span class="ai-icon">✦</span>
+        <div>
+            <h3>Training Insight</h3>
+            <p>Based on your recent performance</p>
+        </div>
+    </div>
+
+    <p class="ai-recommendation-text">
+        {{ ai_message }}
+    </p>
+   </section>
+  {% endif %}
 
     <a href="{{ url_for('auth_bp.next_level') }}">
       <button type="button">NEXT LEVEL →</button>

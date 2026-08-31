@@ -13,6 +13,13 @@ from . import auth_bp, app_bp
 from flask_login import login_user, current_user
 
 
+from app.services.get_performance import get_performance
+from app.services.recommend_training import recommend_training
+from app.services.ai_engine import ai_recommendation_engine
+
+
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -98,7 +105,7 @@ def start_training():
     next_scenario = None
     performance_result = None
     recommendation = None
-
+    ai_message = None
     LEVEL_1_START = 1
     LEVEL_1_END = 5
     
@@ -110,6 +117,25 @@ def start_training():
     else:
         level_start = 6
         level_end =20
+    USER_ID = User.query.filter(id=current_user.id)
+
+    performance = get_performance(USER_ID)#Get the actual performance data using the user_id
+
+    print("PERFORMANCE:")
+    print(performance)
+
+    recommendation = recommend_training(performance)
+
+    print("\nDETERMINISTIC RECOMMENDATION:")
+    print(recommendation)
+
+    ai_message = ai_recommendation_engine(
+      performance=performance,
+    recommendation=recommendation
+    )
+
+    print("\nAI RECOMMENDATION:")
+    print(ai_message)
 
     difficulty_order = case(
         (Scenario.difficulty == ScenarioDifficulty.EASY, 1),
@@ -154,6 +180,16 @@ def start_training():
                 recommendation = recommend_training(
                     performance=performance
                 )
+                try:
+                  ai_message = ai_recommendation_engine(
+                  performance=performance,
+                  recommendation=recommendation
+                )
+                except Exception as e:
+                  print("AI RECOMMENDATION ERROR:", e)
+                  ai_message = "Your training data has been analyzed. Continue practicing to strengthen your scam-detection skills."
+
+                print("AI RECOMMENDATION:", ai_message)
 
                 print(
                     "LEVEL 2 RECOMMENDATION:",
@@ -268,6 +304,16 @@ def start_training():
                 recommendation = recommend_training(
                     performance=performance
                 )
+                try:
+                  ai_message = ai_recommendation_engine(
+                  performance=performance,
+                   recommendation=recommendation
+                  )
+                except Exception as e:
+                  print("AI RECOMMENDATION ERROR:", e)
+                  ai_message = "Your training data has been analyzed. Continue practicing to strengthen your scam-detection skills."
+
+                print("AI RECOMMENDATION:", ai_message)
 
                 print(
                     "TRAINING RECOMMENDATION:",
@@ -379,7 +425,8 @@ def start_training():
         level_complete=level_complete,
         next_scenario=next_scenario,
         performance_result=performance_result,
-        recommendation=recommendation
+        recommendation=recommendation,
+        ai_message=ai_message
     )
 
 
