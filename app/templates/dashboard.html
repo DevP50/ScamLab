@@ -1,12 +1,135 @@
 {% extends "base.html" %}
+
+{% block title %}Dashboard — ScamLab{% endblock %}
+
 {% block content %}
-<h1 id="greeting-el">Nice to have you here, {{user.username}}  </h1>
 
-<p><b>Level</b></p>
-<p>{{user.xp}} XP</p>
+<section class="dashboard">
 
-<p>Scenarios completed: </p>
-<p>Accuracy:  --</p>
+    <div class="dashboard-welcome">
 
-<button id="training-el">START TRAINING</button>
-{% endblock  %}
+        <div>
+            <span class="dashboard-eyebrow">
+                YOUR TRAINING DASHBOARD
+            </span>
+
+            <h1>
+                Welcome back, {{ current_user.username }}.
+            </h1>
+
+            <p>
+                Keep building your ability to recognize suspicious messages.
+            </p>
+        </div>
+
+        <div class="level-badge">
+            Level {{ current_user.level }}
+        </div>
+
+    </div>
+
+
+    <div class="dashboard-grid">
+
+        <div class="stat-card">
+            <span class="stat-icon">⭐</span>
+            <span class="stat-value">
+                {{ current_user.xp }}
+            </span>
+            <span class="stat-label">
+                Total XP
+            </span>
+        </div>
+
+
+        <div class="stat-card">
+            <span class="stat-icon">🎯</span>
+            <span class="stat-value">
+                Level {{ current_user.level }}
+            </span>
+            <span class="stat-label">
+                Current Level
+            </span>
+        </div>
+
+
+        <div class="stat-card">
+            <span class="stat-icon">🛡️</span>
+            <span class="stat-value">
+                Active
+            </span>
+            <span class="stat-label">
+                Training Status
+            </span>
+        </div>
+
+    </div>
+
+
+    <div class="dashboard-main-card">
+
+        <div class="dashboard-card-content">
+
+            <span class="card-eyebrow">
+                READY TO PRACTICE?
+            </span>
+
+            <h2>
+                Test your scam detection skills.
+            </h2>
+
+            <p>
+                Analyze realistic scenarios, identify suspicious clues,
+                and learn why a message should or shouldn't be trusted.
+            </p>
+
+            <a
+                href="{{ url_for('auth_bp.start_training') }}"
+                class="btn-primary"
+            >
+                Start Training →
+            </a>
+
+        </div>
+
+
+        <div class="dashboard-visual">
+            <div class="mini-message">
+                <div class="mini-message-header">
+                    <span class="mini-avatar"></span>
+
+                    <div>
+                        <strong>Unknown Sender</strong>
+                        <small>New message</small>
+                    </div>
+                </div>
+
+                <div class="mini-bubble">
+                    Can you spot the warning signs?
+                </div>
+
+                <div class="mini-clue">
+                    🔎 Analyze the message
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="dashboard-note">
+        <span>💡</span>
+
+        <div>
+            <strong>How ScamLab works</strong>
+            <p>
+                Read the scenario, identify the clues, choose
+                <strong>SCAM</strong> or <strong>LEGIT</strong>,
+                then review the explanation.
+            </p>
+        </div>
+    </div>
+
+</section>
+
+{% endblock %}

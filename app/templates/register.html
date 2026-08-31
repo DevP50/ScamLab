@@ -1,38 +1,90 @@
 {% extends "base.html" %}
-{% block title %}Register{% endblock title %}
+
+{% block title %}Create Account — ScamLab{% endblock %}
 
 {% block content %}
-<h1>Register </h1>
-<form method="POST" action="{{url_for('auth_bp.register')}}">
-    {{form.hidden_tag()}}<!--Used to create the CRSF token -->
-    <p>
-        {{form.username.label }}
-        {{ form.username }}
-        {% for error in form.username.errors %}
-          <span class="usererror">{{ error }}</span>
-        {% endfor %}
-    </p>
-     <p>
-        {{ form.email.label }}
-        {{ form.email }}
-        {% for error in form.email.errors %}
-            <span class="error">{{ error }}</span>
-        {% endfor %}
+
+<section class="auth-page">
+
+```
+<div class="auth-card">
+
+    <div class="auth-header">
+        <div class="auth-logo">🛡️</div>
+
+        <h1>Create your ScamLab account</h1>
+
+        <p>
+            Start learning how to spot scams before they catch you.
+        </p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth_bp.register') }}">
+
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            {{ form.username.label }}
+
+            {{ form.username(
+                class="form-input",
+                placeholder="Choose a username"
+            ) }}
+
+            {% for error in form.username.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.email.label }}
+
+            {{ form.email(
+                class="form-input",
+                placeholder="you@example.com"
+            ) }}
+
+            {% for error in form.email.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.password.label }}
+
+            {{ form.password(
+                class="form-input",
+                placeholder="Create a password"
+            ) }}
+
+            {% for error in form.password.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        {{ form.submit(
+            class="btn-primary btn-full"
+        ) }}
+
+    </form>
+
+    <p class="auth-footer">
+        Already have an account?
+        <a href="{{ url_for('auth_bp.login') }}">
+            Log in
+        </a>
     </p>
 
-    <p>
-        {{ form.password.label }}
-        {{ form.password() }}
-        {% for error in form.password.errors %}
-            <span class="error">{{ error }}</span>
-        {% endfor %}
-    </p>
+</div>
 
-    {{ form.submit() }}
-</form>
-<p>
-  Already Have an Account? 
- <a href="{{url_for('auth_bp.login')}}">Login Here</a>
-</p>
-{% endblock content %}
+<a
+    class="auth-back-link"
+    href="{{ url_for('app_bp.index') }}"
+>
+    ← Back to home
+</a>
+```
 
+</section>
+
+{% endblock %}

@@ -1,26 +1,53 @@
 {% extends "base.html" %}
+
 {% block title %}Log In{% endblock title %}
+
 {% block content %}
-<form method="POST" action="{{url_for('auth_bp.login')}}">
-    {{ form.hidden_tag() }}
-    <p>
-        {{form.email.label}}
-        {{form.email}}
-        {% for error in form.email.errors %}
-          <span class="error">{{ error }}</span>
-        {% endfor %}
-    </p>
 
-    <p>
-        {{form.password.label}}
-        {{form.password()}}
-        {% for error in form.password.errors %}
-          <span class="error">{{ error }}</span>
-        {% endfor %}
-    </p>
+<div class="auth-page">
 
-    <p>
-        {{ form.submit() }}
-    </p>
-</form>
+    <div class="auth-card">
+
+        <div class="auth-header">
+            <span class="auth-badge">ScamLab</span>
+            <h1>Welcome back</h1>
+            <p>Continue your scam awareness training.</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth_bp.login') }}">
+
+            {{ form.hidden_tag() }}
+
+            <div class="form-group">
+                {{ form.email.label }}
+                {{ form.email(class="form-input", placeholder="you@example.com") }}
+
+                {% for error in form.email.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.password.label }}
+                {{ form.password(class="form-input", placeholder="Enter your password") }}
+
+                {% for error in form.password.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            {{ form.submit(class="auth-submit") }}
+
+        </form>
+
+        <p class="auth-footer">
+            Don't have an account?
+            <a href="{{ url_for('auth_bp.register') }}">Create one</a>
+        </p>
+
+    </div>
+    
+
+</div>
+
 {% endblock content %}

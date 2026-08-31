@@ -54,6 +54,10 @@
       <li><b>Overall XP</b> {{performance_result.total_xp}}</li>
     </ul>
 
+    <a href="{{ url_for('auth_bp.next_level') }}">
+      <button type="button">NEXT LEVEL →</button>
+    </a>
+
   {% elif next_scenario %}
 
     <a href="{{ url_for('auth_bp.start_training', next=next_scenario.id) }}">

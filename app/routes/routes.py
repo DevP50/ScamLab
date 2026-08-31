@@ -40,7 +40,7 @@ def register():
             username=username,
             email=email,
             password_hash=password_hash,
-            level=0,
+            level=1,
             xp=0
         )
 
@@ -83,7 +83,7 @@ def login():
 @auth_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     user = User.query.all()
-    return render_template('dashboard.html', user=user)
+    return render_template('dashboard.html', user=current_user)
 
 
 @auth_bp.route('/play', methods=['GET', 'POST'])
@@ -97,8 +97,19 @@ def start_training():
     level_complete = False
     next_scenario = None
     performance_result = None
+    recommendation = None
 
+    LEVEL_1_START = 1
     LEVEL_1_END = 5
+    
+    LEVEL_2_START = 6
+    LEVEL_2_END = 20
+    if current_user.level == 1:
+        level_start =1
+        level_end=5
+    else:
+        level_start = 6
+        level_end =20
 
     difficulty_order = case(
         (Scenario.difficulty == ScenarioDifficulty.EASY, 1),
@@ -116,8 +127,6 @@ def start_training():
         else:
             user_attempts = Attempt.query.filter_by(
                 user_id=current_user.id
-            ).order_by(
-                Attempt.id.asc()
             ).all()
 
             attempted_ids = {
@@ -125,18 +134,62 @@ def start_training():
                 for attempt in user_attempts
             }
 
-            if attempted_ids:
+            if current_user.level == 1:
+
                 scenario = Scenario.query.filter(
+                    Scenario.id >= LEVEL_1_START,
+                    Scenario.id <= LEVEL_1_END,
                     ~Scenario.id.in_(attempted_ids)
                 ).order_by(
                     difficulty_order,
                     Scenario.id
                 ).first()
+
             else:
-                scenario = Scenario.query.order_by(
-                    difficulty_order,
-                    Scenario.id
-                ).first()
+
+                performance = get_performance(
+                    user_id=current_user.id
+                )
+
+                recommendation = recommend_training(
+                    performance=performance
+                )
+
+                print(
+                    "LEVEL 2 RECOMMENDATION:",
+                    recommendation
+                )
+
+                focus_categories = recommendation.get(
+                    "focus_categories",
+                    []
+                )
+
+                recommended_difficulty = recommendation.get(
+                    "recommended_difficulty",
+                    "easy"
+                )
+
+                scenario = None
+
+                if focus_categories:
+
+                    scenario = select_scenario(
+                        category=focus_categories[0],
+                        difficulty=recommended_difficulty,
+                        user_id=current_user.id
+                    )
+
+                if not scenario:
+
+                    scenario = Scenario.query.filter(
+                        Scenario.id >= LEVEL_2_START,
+                        Scenario.id <= LEVEL_2_END,
+                        ~Scenario.id.in_(attempted_ids)
+                    ).order_by(
+                        difficulty_order,
+                        Scenario.id
+                    ).first()
 
         if not scenario:
             return "No more scenarios available.", 404
@@ -192,30 +245,34 @@ def start_training():
         db.session.add(attempt)
         db.session.commit()
 
-        if scenario.id <= LEVEL_1_END:
+        performance = get_performance(
+            user_id=current_user.id
+        )
+
+        performance_result = {
+            "total_attempts": performance["total_attempts"],
+            "correct_attempts": performance["correct_attempts"],
+            "accuracy": performance["accuracy"],
+            "total_score": performance["total_score"],
+            "total_xp": performance["total_xp"],
+            "category_performance": performance["category_performance"],
+            "difficulty_performance": performance["difficulty_performance"]
+        }
+
+        if current_user.level == 1:
 
             if scenario.id == LEVEL_1_END:
+
                 level_complete = True
-
-                performance = get_performance(
-                    user_id=current_user.id
-                )
-
-                performance_result = {
-                    "total_attempts": performance["total_attempts"],
-                    "correct_attempts": performance["correct_attempts"],
-                    "accuracy": performance["accuracy"],
-                    "total_score": performance["total_score"],
-                    "total_xp": performance["total_xp"],
-                    "category_performance": performance["category_performance"],
-                    "difficulty_performance": performance["difficulty_performance"]
-                }
 
                 recommendation = recommend_training(
                     performance=performance
                 )
 
-                print("TRAINING RECOMMENDATION:", recommendation)
+                print(
+                    "TRAINING RECOMMENDATION:",
+                    recommendation
+                )
 
                 focus_categories = recommendation.get(
                     "focus_categories",
@@ -228,6 +285,7 @@ def start_training():
                 )
 
                 if focus_categories:
+
                     next_scenario = select_scenario(
                         category=focus_categories[0],
                         difficulty=recommended_difficulty,
@@ -235,34 +293,28 @@ def start_training():
                     )
 
                     print(
-                        "ADAPTIVE NEXT SCENARIO:",
+                        "LEVEL 2 PREVIEW SCENARIO:",
                         next_scenario
                     )
 
             else:
+
                 next_scenario = Scenario.query.filter(
-                    Scenario.id > scenario.id
+                    Scenario.id > scenario.id,
+                    Scenario.id <= LEVEL_1_END
                 ).order_by(
                     Scenario.id
                 ).first()
 
         else:
-            performance = get_performance(
-                user_id=current_user.id
-            )
-
-            performance_result = {
-                "total_attempts": performance["total_attempts"],
-                "correct_attempts": performance["correct_attempts"],
-                "accuracy": performance["accuracy"],
-                "total_score": performance["total_score"],
-                "total_xp": performance["total_xp"],
-                "category_performance": performance["category_performance"],
-                "difficulty_performance": performance["difficulty_performance"]
-            }
 
             recommendation = recommend_training(
                 performance=performance
+            )
+
+            print(
+                "LEVEL 2 RECOMMENDATION:",
+                recommendation
             )
 
             focus_categories = recommendation.get(
@@ -276,13 +328,36 @@ def start_training():
             )
 
             if focus_categories:
+
                 next_scenario = select_scenario(
                     category=focus_categories[0],
                     difficulty=recommended_difficulty,
                     user_id=current_user.id
                 )
 
-        print("CURRENT SCENARIO:", scenario.id, scenario.title)
+            if not next_scenario:
+
+                attempted_ids = {
+                    attempt.scenario_id
+                    for attempt in Attempt.query.filter_by(
+                        user_id=current_user.id
+                    ).all()
+                }
+
+                next_scenario = Scenario.query.filter(
+                    Scenario.id >= LEVEL_2_START,
+                    Scenario.id <= LEVEL_2_END,
+                    ~Scenario.id.in_(attempted_ids)
+                ).order_by(
+                    difficulty_order,
+                    Scenario.id
+                ).first()
+
+        print(
+            "CURRENT SCENARIO:",
+            scenario.id,
+            scenario.title
+        )
 
         if next_scenario:
             print(
@@ -303,5 +378,20 @@ def start_training():
         selected_clues=selected_clues,
         level_complete=level_complete,
         next_scenario=next_scenario,
-        performance_result=performance_result
+        performance_result=performance_result,
+        recommendation=recommendation
     )
+
+
+@auth_bp.route('/next-level')
+def next_level():
+
+    if current_user.level >= 2:
+        return redirect(url_for('auth_bp.start_training'))
+
+    current_user.level = 2
+    db.session.commit()
+
+    flash('Level 2 unlocked!', 'success')
+
+    return redirect(url_for('auth_bp.start_training'))

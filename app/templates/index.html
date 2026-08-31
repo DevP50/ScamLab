@@ -1,12 +1,73 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Home Page</title>
-    </head>
-    <body>
-        <h1 align="center">ScamLab</h1>
-        <form method="post" action="{{url_for('auth_bp.register')}}">
-            <button>Register Now</button>
-        </form>
-    </body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}ScamLab — Learn to Spot Scams{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+
+    <div class="hero-badge">
+        🛡️ Interactive scam awareness training
+    </div>
+
+    <h1>
+        Learn to spot scams<br>
+        <span>before they fool you.</span>
+    </h1>
+
+    <p class="hero-copy">
+        ScamLab puts you inside realistic messages and asks you
+        to identify the warning signs. Learn through practice,
+        feedback, and adaptive training.
+    </p>
+
+    <div class="hero-actions">
+        <a href="{{ url_for('auth_bp.register') }}" class="btn-primary">
+            Start Training
+        </a>
+
+        <a href="{{ url_for('auth_bp.login') }}" class="btn-secondary">
+            Log in
+        </a>
+    </div>
+
+</section>
+
+
+<section class="feature-section">
+
+    <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <h3>Realistic scenarios</h3>
+        <p>
+            Analyze messages that look like the ones you may
+            encounter in everyday life.
+        </p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">🔎</div>
+        <h3>Spot the clues</h3>
+        <p>
+            Identify suspicious details such as urgency,
+            impersonation, and sensitive information requests.
+        </p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <h3>Adaptive training</h3>
+        <p>
+            Your performance helps determine what you should
+            practice next.
+        </p>
+    </div>
+
+</section>
+
+<section class="trust-section">
+    <strong>Practice. Learn. Recognize.</strong>
+    <span>ScamLab is an educational simulation.</span>
+</section>
+
+{% endblock %}
