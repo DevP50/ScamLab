@@ -2,7 +2,8 @@ from app.models import Attempt
 
 
 def get_performance(user_id):
-#Gets all the  attempts for a specific user 
+    # Gets all the attempts for a specific user
+
     attempts = Attempt.query.filter_by(
         user_id=user_id
     ).all()
@@ -19,20 +20,37 @@ def get_performance(user_id):
         }
 
     total_attempts = len(attempts)
-    correct_attempts = sum(1 for attempt in attempts if attempt.correct)
+
+    correct_attempts = sum(
+        1 for attempt in attempts if attempt.correct
+    )
 
     accuracy = round(
         (correct_attempts / total_attempts) * 100,
         2
     )
 
-    total_score = sum(attempt.score for attempt in attempts)
-    total_xp = sum(attempt.xp_earned for attempt in attempts)
+    total_score = sum(
+        attempt.score for attempt in attempts
+    )
+
+    total_xp = sum(
+        attempt.xp_earned for attempt in attempts
+    )
 
     category_performance = {}
     difficulty_performance = {}
 
     for attempt in attempts:
+
+        print(
+            "ATTEMPT:",
+            attempt.id,
+            "SCENARIO_ID:",
+            attempt.scenario_id,
+            "USER_SCENARIO:",
+            attempt.user_scenario
+        )
 
         scenario = attempt.user_scenario
 
