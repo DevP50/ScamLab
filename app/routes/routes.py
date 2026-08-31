@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, session, request
+from flask import render_template, redirect, url_for, flash, session, request
 from forms import RegistrationForm, LoginForm
 from app.models import User, Scenario, ScenarioDifficulty, Attempt
 from extensions import db, login_manager
@@ -7,17 +7,11 @@ from app.services.calculate_score import calculate_score
 from app.services.get_performance import get_performance
 from app.services.recommend_training import recommend_training
 from app.services.scenario_selector import select_scenario
+from app.services.ai_engine import ai_recommendation_engine
 from sqlalchemy import case
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import auth_bp, app_bp
 from flask_login import login_user, current_user
-
-
-from app.services.get_performance import get_performance
-from app.services.recommend_training import recommend_training
-from app.services.ai_engine import ai_recommendation_engine
-
-
 
 
 @login_manager.user_loader
@@ -57,9 +51,7 @@ def register():
         flash('Registration successful!', 'success')
         return redirect(url_for('auth_bp.login'))
 
-    else:
-        print("FORM ERRORS:", form.errors)
-
+    print("FORM ERRORS:", form.errors)
     return render_template('register.html', form=form)
 
 
@@ -81,21 +73,17 @@ def login():
         flash('Invalid email or password', 'danger')
         return redirect(url_for('auth_bp.login'))
 
-    else:
-        print("FORM ERRORS:", form.errors)
-
+    print("FORM ERRORS:", form.errors)
     return render_template('login.html', form=form)
 
 
 @auth_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-    user = User.query.all()
     return render_template('dashboard.html', user=current_user)
 
 
 @auth_bp.route('/play', methods=['GET', 'POST'])
 def start_training():
-
     user_answer = None
     correct = None
     message = None
@@ -106,29 +94,26 @@ def start_training():
     performance_result = None
     recommendation = None
     ai_message = None
+
     LEVEL_1_START = 1
     LEVEL_1_END = 5
-    
     LEVEL_2_START = 6
     LEVEL_2_END = 20
-    if current_user.level == 1:
-        level_start =1
-        level_end=5
-    else:
-        level_start = 6
-        level_end =20
+
     performance = get_performance(user_id=current_user.id)
-
-
     recommendation = recommend_training(performance)
 
-
-    ai_message = ai_recommendation_engine(
-      performance=performance,
-    recommendation=recommendation
-    )
-
-
+    try:
+        ai_message = ai_recommendation_engine(
+            performance=performance,
+            recommendation=recommendation
+        )
+    except Exception as e:
+        print("AI RECOMMENDATION ERROR:", e)
+        ai_message = (
+            "Keep practicing and focus on the areas where "
+            "you need the most improvement."
+        )
 
     difficulty_order = case(
         (Scenario.difficulty == ScenarioDifficulty.EASY, 1),
@@ -137,7 +122,6 @@ def start_training():
     )
 
     if request.method == "GET":
-
         next_id = request.args.get("next")
 
         if next_id:
@@ -154,7 +138,6 @@ def start_training():
             }
 
             if current_user.level == 1:
-
                 scenario = Scenario.query.filter(
                     Scenario.id >= LEVEL_1_START,
                     Scenario.id <= LEVEL_1_END,
@@ -165,30 +148,6 @@ def start_training():
                 ).first()
 
             else:
-
-                performance = get_performance(
-                    user_id=current_user.id
-                )
-
-                recommendation = recommend_training(
-                    performance=performance
-                )
-                try:
-                  ai_message = ai_recommendation_engine(
-                  performance=performance,
-                  recommendation=recommendation
-                )
-                except Exception as e:
-                  print("AI RECOMMENDATION ERROR:", e)
-                  ai_message = "Your training data has been analyzed. Continue practicing to strengthen your scam-detection skills."
-
-                print("AI RECOMMENDATION:", ai_message)
-
-                print(
-                    "LEVEL 2 RECOMMENDATION:",
-                    recommendation
-                )
-
                 focus_categories = recommendation.get(
                     "focus_categories",
                     []
@@ -202,7 +161,6 @@ def start_training():
                 scenario = None
 
                 if focus_categories:
-
                     scenario = select_scenario(
                         category=focus_categories[0],
                         difficulty=recommended_difficulty,
@@ -210,7 +168,6 @@ def start_training():
                     )
 
                 if not scenario:
-
                     scenario = Scenario.query.filter(
                         Scenario.id >= LEVEL_2_START,
                         Scenario.id <= LEVEL_2_END,
@@ -224,7 +181,6 @@ def start_training():
             return "No more scenarios available.", 404
 
     else:
-
         scenario_id = request.form.get("scenario_id")
         scenario = Scenario.query.get(scenario_id)
 
@@ -288,30 +244,25 @@ def start_training():
             "difficulty_performance": performance["difficulty_performance"]
         }
 
+        recommendation = recommend_training(
+            performance=performance
+        )
+
+        try:
+            ai_message = ai_recommendation_engine(
+                performance=performance,
+                recommendation=recommendation
+            )
+        except Exception as e:
+            print("AI RECOMMENDATION ERROR:", e)
+            ai_message = (
+                "Keep practicing and focus on the areas where "
+                "you need the most improvement."
+            )
+
         if current_user.level == 1:
-
             if scenario.id == LEVEL_1_END:
-
                 level_complete = True
-
-                recommendation = recommend_training(
-                    performance=performance
-                )
-                try:
-                  ai_message = ai_recommendation_engine(
-                  performance=performance,
-                   recommendation=recommendation
-                  )
-                except Exception as e:
-                  print("AI RECOMMENDATION ERROR:", e)
-                  ai_message = "Your training data has been analyzed. Continue practicing to strengthen your scam-detection skills."
-
-                print("AI RECOMMENDATION:", ai_message)
-
-                print(
-                    "TRAINING RECOMMENDATION:",
-                    recommendation
-                )
 
                 focus_categories = recommendation.get(
                     "focus_categories",
@@ -324,20 +275,13 @@ def start_training():
                 )
 
                 if focus_categories:
-
                     next_scenario = select_scenario(
                         category=focus_categories[0],
                         difficulty=recommended_difficulty,
                         user_id=current_user.id
                     )
 
-                    print(
-                        "LEVEL 2 PREVIEW SCENARIO:",
-                        next_scenario
-                    )
-
             else:
-
                 next_scenario = Scenario.query.filter(
                     Scenario.id > scenario.id,
                     Scenario.id <= LEVEL_1_END
@@ -346,16 +290,6 @@ def start_training():
                 ).first()
 
         else:
-
-            recommendation = recommend_training(
-                performance=performance
-            )
-
-            print(
-                "LEVEL 2 RECOMMENDATION:",
-                recommendation
-            )
-
             focus_categories = recommendation.get(
                 "focus_categories",
                 []
@@ -367,7 +301,6 @@ def start_training():
             )
 
             if focus_categories:
-
                 next_scenario = select_scenario(
                     category=focus_categories[0],
                     difficulty=recommended_difficulty,
@@ -375,7 +308,6 @@ def start_training():
                 )
 
             if not next_scenario:
-
                 attempted_ids = {
                     attempt.scenario_id
                     for attempt in Attempt.query.filter_by(
@@ -391,21 +323,6 @@ def start_training():
                     difficulty_order,
                     Scenario.id
                 ).first()
-
-        print(
-            "CURRENT SCENARIO:",
-            scenario.id,
-            scenario.title
-        )
-
-        if next_scenario:
-            print(
-                "NEXT SCENARIO:",
-                next_scenario.id,
-                next_scenario.title
-            )
-        else:
-            print("NO MORE SCENARIOS!")
 
     return render_template(
         "play.html",
@@ -425,7 +342,6 @@ def start_training():
 
 @auth_bp.route('/next-level')
 def next_level():
-
     if current_user.level >= 2:
         return redirect(url_for('auth_bp.start_training'))
 
@@ -433,5 +349,4 @@ def next_level():
     db.session.commit()
 
     flash('Level 2 unlocked!', 'success')
-
     return redirect(url_for('auth_bp.start_training'))
