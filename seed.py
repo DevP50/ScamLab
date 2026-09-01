@@ -452,27 +452,24 @@ scenarios =[ {
     ]
 print("NUMBER OF SCENARIOS:", len(scenarios))
 with app.app_context():
- for data in scenarios:
-  print("SEEDING:", data["title"])
-  title = data['title']
-  content = data['content']
-  correct_answer = data['correct_answer']
-  clues = data['clues']
-  difficulty = data['difficulty']
-  category = data['category']
-  explanation = data['explanation']
-  clue_options = data['clue_options']
-  scenario = Scenario(
-    title = title,
-    content = content,
-    correct_answer = correct_answer,
-    clues = clues,
-    category = category,
-    explanation = explanation,
-    difficulty = difficulty,
-    clue_options = clue_options
-    )
+  if Scenario.query.count() > 0:
+        print("SCENARIOS ALREADY EXIST. SKIPPING SEED.")
+  else:
+   for data in scenarios:
+     print("SEEDING:", data["title"])
 
-  db.session.add(scenario)
-  print("ADDED:", scenario.title)
- db.session.commit()
+     scenario = Scenario(
+                title=data["title"],
+                content=data["content"],
+                correct_answer=data["correct_answer"],
+                clues=data["clues"],
+                category=data["category"],
+                explanation=data["explanation"],
+                difficulty=data["difficulty"],
+                clue_options=data["clue_options"]
+            )
+
+     db.session.add(scenario)
+
+   db.session.commit()
+   print("SEEDED", len(scenarios), "SCENARIOS") 
