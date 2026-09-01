@@ -103,7 +103,6 @@ def start_training():
     performance = get_performance(user_id=current_user.id)
     recommendation = recommend_training(performance)
 
-
     difficulty_order = case(
         (Scenario.difficulty == ScenarioDifficulty.EASY, 1),
         (Scenario.difficulty == ScenarioDifficulty.MEDIUM, 2),
@@ -339,3 +338,4 @@ def next_level():
 
     flash('Level 2 unlocked!', 'success')
     return redirect(url_for('auth_bp.start_training'))
+
