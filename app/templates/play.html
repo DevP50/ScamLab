@@ -22,9 +22,9 @@
         <br>
   {% endfor %}
  <p>Is this: </p>
-  <button align="left" value="scam" name="answer" id="answer-el" {% if result %}disabled{% endif %}>SCAM</button> 
+  <button align="left" value="scam" name="answer" id="answer-el" {% if result %}disabled{% endif %} class="btn-primary btn-full">SCAM</button> 
    <p><b>OR</b></p>
-  <button align="right" value="legit" name="answer" id="answer-el" {% if result %}disabled{% endif %}>LEGIT</button>
+  <button align="right" value="legit" name="answer" id="answer-el" {% if result %}disabled{% endif %} class="btn-primary btn-full">LEGIT</button>
   <input type="hidden" name="scenario_id" value="{{scenario.id}}">
 
  </form>
@@ -70,13 +70,13 @@
   {% endif %}
 
     <a href="{{ url_for('auth_bp.next_level') }}">
-      <button type="button">NEXT LEVEL →</button>
+      <button type="button" class="btn-primary btn-full">NEXT LEVEL →</button>
     </a>
 
   {% elif next_scenario %}
 
     <a href="{{ url_for('auth_bp.start_training', next=next_scenario.id) }}">
-        <button type="button">NEXT SCENARIO</button>
+        <button type="button" class="btn-primary btn-full">NEXT SCENARIO</button>
     </a>
 
   {% endif %}
