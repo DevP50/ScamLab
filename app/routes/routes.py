@@ -103,17 +103,6 @@ def start_training():
     performance = get_performance(user_id=current_user.id)
     recommendation = recommend_training(performance)
 
-    try:
-        ai_message = ai_recommendation_engine(
-            performance=performance,
-            recommendation=recommendation
-        )
-    except Exception as e:
-        print("AI RECOMMENDATION ERROR:", e)
-        ai_message = (
-            "Keep practicing and focus on the areas where "
-            "you need the most improvement."
-        )
 
     difficulty_order = case(
         (Scenario.difficulty == ScenarioDifficulty.EASY, 1),
