@@ -56,7 +56,7 @@
   {% if ai_message %}
    <section class="ai-recommendation">
     <div class="ai-recommendation-header">
-        <span class="ai-icon">✦ ScamLab AI</span>
+        <span class="ai-icon">🤖🧠ScamLab Intelligence</span>
         <div>
             <h3>Training Insight</h3>
             <p>Based on your recent performance</p>
@@ -70,13 +70,13 @@
   {% endif %}
 
     <a href="{{ url_for('auth_bp.next_level') }}">
-      <button type="button" class="btn-primary btn-full">NEXT LEVEL →</button>
+      <button type="button"  style="border-radius: 5px; background-color: blue;">NEXT LEVEL →</button>
     </a>
 
   {% elif next_scenario %}
 
     <a href="{{ url_for('auth_bp.start_training', next=next_scenario.id) }}">
-        <button type="button" class="btn-primary btn-full">NEXT SCENARIO</button>
+        <button type="button" style="border-radius: 5px; background-color: blue;">NEXT SCENARIO</button>
     </a>
 
   {% endif %}
